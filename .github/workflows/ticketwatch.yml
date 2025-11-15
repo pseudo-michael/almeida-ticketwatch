@@ -1,0 +1,50 @@
+name: TicketWatch
+
+on:
+  # Runs every 5 minutes (GitHub cron is in UTC)
+  schedule:
+    - cron: "*/5 * * * *"
+  # Lets you run it manually from the Actions tab
+  workflow_dispatch: {}
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1) Get your code
+      - name: Check out repo
+        uses: actions/checkout@v4
+
+      # 2) Set up Python 3.11
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      # 3) Install Python deps (from requirements.txt)
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      # 4) Install Playwright browsers + OS deps (we use Firefox)
+      - name: Install Playwright (browsers & deps)
+        run: |
+          python -m playwright install --with-deps firefox
+
+      # 5) Run your script; also save output to a file
+      - name: Run watcher
+        env:
+          # Optional: add this secret in Settings → Secrets and variables → Actions
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+        run: |
+          python watch_almeida.py | tee output.json
+
+      # 6) Upload the JSON so you can download it from the run
+      - name: Upload JSON artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ticketwatch-output
+          path: output.json
+          retention-days: 7
