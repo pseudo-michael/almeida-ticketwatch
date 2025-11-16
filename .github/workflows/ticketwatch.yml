@@ -1,10 +1,13 @@
 name: TicketWatch
 
 on:
-  # ⏰ Run automatically every 5 minutes (UTC)
+  # ⏰ Every 10 minutes, between 08:00 and 23:59 **UTC**
+  # Note: GitHub cron is UTC. London time will be offset by +0 or +1 hour
+  # depending on BST. If you want strictly 8am–midnight London time,
+  # you’d adjust this when the clocks change.
   schedule:
-    - cron: "*/5 * * * *"
-  # ▶️ Allow manual runs from the Actions tab
+    - cron: "*/10 8-23 * * *"
+  # ▶️ Manual runs from the Actions tab
   workflow_dispatch: {}
 
 jobs:
@@ -22,7 +25,7 @@ jobs:
         with:
           python-version: "3.11"
 
-      # 3️⃣  Install dependencies and Firefox browser
+      # 3️⃣  Install dependencies & Playwright Firefox
       - name: Install dependencies & Playwright browsers
         run: |
           python -m pip install --upgrade pip
@@ -32,12 +35,11 @@ jobs:
       # 4️⃣  Run the watcher script
       - name: Run watcher
         env:
-          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}   # optional
           ALMEIDA_URL: https://ticketing.almeida.co.uk/events/7992
         run: |
           python watch_almeida.py | tee output.json
 
-      # 5️⃣  Upload JSON output as artifact (for download from run page)
+      # 5️⃣  Upload JSON output as artifact
       - name: Upload JSON artifact
         uses: actions/upload-artifact@v4
         with:
